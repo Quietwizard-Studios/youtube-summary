@@ -128,10 +128,11 @@ function MobileMenu({
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
           <CategoryLink
             active={selectedCategory === null && !isArchivedView}
+            category="None"
             onNavigate={onClose}
             variant="sidebar"
           >
-            All Videos
+            Uncategorized
           </CategoryLink>
           {categories.map((category) => (
             <CategoryLink

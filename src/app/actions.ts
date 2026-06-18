@@ -16,7 +16,7 @@ export async function archiveVideo(formData: FormData) {
   const id = getVideoId(formData)
   await updateVideo(id, { archived: true, read: true })
   revalidatePath('/')
-  redirect('/')
+  redirect(getRedirectTarget(formData))
 }
 
 export async function updateVideoCategory(videoId: number, category: string) {
@@ -99,4 +99,18 @@ function getVideoId(formData: FormData) {
   }
 
   return id
+}
+
+function getRedirectTarget(formData: FormData) {
+  const redirectTo = formData.get('redirectTo')
+
+  if (
+    typeof redirectTo === 'string' &&
+    redirectTo.startsWith('/') &&
+    !redirectTo.startsWith('//')
+  ) {
+    return redirectTo
+  }
+
+  return '/'
 }

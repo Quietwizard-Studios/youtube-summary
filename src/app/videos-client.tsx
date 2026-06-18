@@ -31,6 +31,7 @@ export default function VideosClient({
   const router = useRouter()
   const hasPreviousPage = currentPage > 1
   const hasNextPage = currentPage < totalPages
+  const listHref = buildPageHref(selectedCategory, showArchived, currentPage, pageSize)
   return (
     <div className="p-4 sm:p-6">
       {error && (
@@ -39,7 +40,7 @@ export default function VideosClient({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
         {videos.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-zinc-600 dark:text-zinc-400">
@@ -52,7 +53,7 @@ export default function VideosClient({
           videos.map((video, index) => (
             <Link
               key={video.id}
-              href={`/video/${video.videoId || video.id}`}
+              href={`/video/${video.videoId || video.id}?from=${encodeURIComponent(listHref)}`}
               className="overflow-hidden rounded-lg border border-zinc-200 bg-white transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-lg/10"
             >
               <article className="h-full">

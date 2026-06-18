@@ -1,68 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import CategoryPicker from './category-picker'
-
-const MIN_SCALE = 50
-const MAX_SCALE = 200
-const STEP = 10
-const DEFAULT_SCALE = 100
+import { useFontSize } from './font-size-context'
 
 type SummaryProps = {
   summary: string | null
-  videoId: number
-  initialCategory: string
-  categories: string[]
 }
 
-export default function Summary({
-  summary,
-  videoId,
-  initialCategory,
-  categories,
-}: SummaryProps) {
-  const [scale, setScale] = useState(DEFAULT_SCALE)
+export default function Summary({ summary }: SummaryProps) {
+  const { scale } = useFontSize()
 
-  return (
-    <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <CategoryPicker
-          videoId={videoId}
-          initialCategory={initialCategory}
-          categories={categories}
-        />
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Decrease font size"
-            onClick={() => setScale((value) => Math.max(MIN_SCALE, value - STEP))}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-300 text-lg font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            −
-          </button>
-          <button
-            type="button"
-            aria-label="Reset font size to 100%"
-            onClick={() => setScale(DEFAULT_SCALE)}
-            className="inline-flex h-9 items-center justify-center rounded-md border border-zinc-300 px-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            100%
-          </button>
-          <button
-            type="button"
-            aria-label="Increase font size"
-            onClick={() => setScale((value) => Math.min(MAX_SCALE, value + STEP))}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-zinc-300 text-lg font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      <SummaryContent summary={summary} scale={scale} />
-    </div>
-  )
+  return <SummaryContent summary={summary} scale={scale} />
 }
 
 function SummaryContent({

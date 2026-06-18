@@ -19,8 +19,10 @@ export default async function Home({
   }>
 }) {
   const { category, page, archived, pageSize: pageSizeParam } = await searchParams
-  const selectedCategory = category?.trim() || null
+  const rawCategory = category?.trim() || null
   const showArchived = archived === 'true'
+  const selectedCategory =
+    !showArchived && !rawCategory ? UNCATEGORIZED : rawCategory
   const pageSize = PAGE_SIZE_OPTIONS.includes(Number(pageSizeParam))
     ? Number(pageSizeParam)
     : DEFAULT_PAGE_SIZE

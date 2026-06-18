@@ -5,6 +5,11 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import type { Video } from '@/types/database'
 import Summary from './summary'
+import SubmitButton from './submit-button'
+import BackLink from './back-link'
+import CategoryPicker from './category-picker'
+import { FontSizeProvider } from './font-size-context'
+import FontSizeControls from './font-size-controls'
 
 type VideoDetail = Pick<
   Video,
@@ -22,10 +27,14 @@ type VideoDetail = Pick<
 
 export default async function VideoDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string }>
 }) {
   const { id } = await params
+  const { from } = await searchParams
+  const backHref = isSafeRedirectTarget(from) ? from : '/'
   const supabase = await createClient()
   const {
     data: { user },
@@ -63,65 +72,49 @@ export default async function VideoDetailPage({
       </section>
 
       <article className="mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
-            >
-              Back
-            </Link>
+        <FontSizeProvider>
+          <div className="sticky top-[73px] z-10 mb-8 grid grid-cols-1 items-left sm:items-center gap-1 border-b border-zinc-200 bg-zinc-50 py-3 dark:border-zinc-800 dark:bg-black sm:grid-cols-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2 md:gap-4 pb-3 sm:pb-0">
+              <BackLink href={backHref} />
+              <CategoryPicker
+                videoId={video.id}
+                initialCategory={normalizedCategory}
+                categories={categories}
+              />
+            </div>
+
+            <div className="flex items-center justify-start sm:justify-center gap-2 sm:gap-2 md:gap-4 pb-3 sm:pb-0 order-last sm:order-middle">
+              <FontSizeControls />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:gap-2 md:gap-4 pb-3 sm:pb-0 order-middle sm:order-last">
+              <ActionForm action={markVideoAsRead} videoId={video.id} isRead={video.read === true}>
+                Mark as Read
+              </ActionForm>
+              <ActionForm action={archiveVideo} danger videoId={video.id} redirectTo={backHref}>
+                Archive
+              </ActionForm>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <ActionForm action={markVideoAsRead} videoId={video.id} isRead={video.read === true}>
-              Mark as Read
-            </ActionForm>
-            <ActionForm action={archiveVideo} danger videoId={video.id}>
-              Archive
-            </ActionForm>
-          </div>
-        </div>
-
-        <p className="mb-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          {formatPublishedDate(video.videoPublished)}
-        </p>
-        <h1 className="max-w-4xl text-4xl font-bold leading-tight text-zinc-900 dark:text-zinc-50 md:text-5xl">
-          {video.title || 'Untitled video'}
-        </h1>
-        <p className="mt-4 text-lg font-medium text-zinc-700 dark:text-zinc-300">
-          <span className="mr-4">
+          <p className="mb-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            <span className="mr-4">{formatPublishedDate(video.videoPublished)}</span> | <span className="ml-4"><Link href={`https://www.youtube.com/watch?v=${video.videoId}`}>Watch on YouTube</Link></span>
+          </p>
+          <h1 className="max-w-4xl text-4xl font-bold leading-tight text-zinc-900 dark:text-zinc-50 md:text-5xl">
+            {video.title || 'Untitled video'}
+          </h1>
+          <p className="mt-4 text-lg font-medium text-zinc-700 dark:text-zinc-300">
             <Link
               href={`https://www.youtube.com/channel/${video.videoChannelId}`}
             >
               {video.videoChannelTitle || 'Unknown channel'}
             </Link>
-          </span>|<span className="ml-4">
-            <Link href={`https://www.youtube.com/watch?v=${video.videoId}`}>
-              Watch on YouTube
-            </Link>
-          </span>              
-        </p>
+          </p>
 
-        <hr className="my-8 border-zinc-200 dark:border-zinc-800" />
+          <hr className="my-8 border-zinc-200 dark:border-zinc-800" />
 
-        <Summary
-          summary={video.summary}
-          videoId={video.id}
-          initialCategory={normalizedCategory}
-          categories={categories}
-        />
-
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <ActionForm action={markVideoAsRead} videoId={video.id} isRead={video.read === true}>
-              Mark as Read
-            </ActionForm>
-            <ActionForm action={archiveVideo} danger videoId={video.id}>
-              Archive
-            </ActionForm>
-          </div>
-        </div>
+          <Summary summary={video.summary} />
+        </FontSizeProvider>
       </article>
     </div>
   )
@@ -171,12 +164,14 @@ function ActionForm({
   danger = false,
   isRead = false,
   videoId,
+  redirectTo,
 }: {
   action: (formData: FormData) => Promise<void>
   children: string
   danger?: boolean
   isRead?: boolean
   videoId: number
+  redirectTo?: string
 }) {
   if (isRead) {
     return (
@@ -201,16 +196,10 @@ function ActionForm({
   return (
     <form action={action}>
       <input type="hidden" name="id" value={videoId} />
-      <button
-        type="submit"
-        className={`inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-          danger
-            ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950'
-            : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800'
-        }`}
-      >
+      {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
+      <SubmitButton danger={danger} pendingLabel={`${children}...`}>
         {children}
-      </button>
+      </SubmitButton>
     </form>
   )
 }
@@ -234,6 +223,10 @@ async function getCategories() {
 
 function normalizeCategory(category: string | null) {
   return category?.trim() || 'None'
+}
+
+function isSafeRedirectTarget(target: string | undefined): target is string {
+  return typeof target === 'string' && target.startsWith('/') && !target.startsWith('//')
 }
 
 function formatPublishedDate(date: string | null) {
